@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hopy — With Hopy, everybody's happy</title>
+  <link href="https://fonts.googleapis.com/css2?family=Righteous&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --green: #2ecc71; --green-dark: #27ae60;
+      --orange: #f39c12; --orange-light: #f9ca24;
+      --cream: #fffdf7; --dark: #1a1a2e;
+      --text: #2d3436; --muted: #636e72;
+    }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Nunito', sans-serif; background: var(--cream); color: var(--text); overflow-x: hidden; }
+
+    /* HERO */
+    .hero {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; padding: 2rem; position: relative; overflow: hidden;
+    }
+    .blob { position: absolute; border-radius: 50%; filter: blur(60px); opacity: 0.15; animation: float 6s ease-in-out infinite; }
+    .blob-1 { width: 400px; height: 400px; background: var(--green); top: -100px; left: -100px; }
+    .blob-2 { width: 300px; height: 300px; background: var(--orange); bottom: -80px; right: -80px; animation-delay: 3s; }
+    @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-30px)} }
+
+    .road-lines { position: absolute; bottom:0; left:50%; transform:translateX(-50%); width:6px; height:100%; display:flex; flex-direction:column; gap:20px; opacity:0.12; animation:road 1.5s linear infinite; }
+    .road-lines span { display:block; width:6px; height:40px; background:white; border-radius:3px; }
+    @keyframes road { from{transform:translateX(-50%) translateY(-60px)} to{transform:translateX(-50%) translateY(0)} }
+
+    .hero-content { position: relative; z-index: 2; max-width: 720px; }
+    .coming-badge { background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2); border-radius:50px; padding:0.5rem 1.2rem; display:inline-flex; align-items:center; gap:0.6rem; color:rgba(255,255,255,0.7); font-size:0.85rem; margin-bottom:1.5rem; animation:fadeUp 0.8s 0.1s both; }
+    .dot { width:8px; height:8px; background:var(--green); border-radius:50%; animation:pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(1.4)} }
+
+    .logo { font-family:'Righteous',cursive; font-size:clamp(4.5rem,13vw,9rem); color:white; line-height:1; animation:popIn 0.8s cubic-bezier(0.175,0.885,0.32,1.275) both; }
+    .logo span { color:var(--orange-light); }
+    @keyframes popIn { from{opacity:0;transform:scale(0.5) translateY(30px)} to{opacity:1;transform:scale(1) translateY(0)} }
+
+    .tagline { font-size:clamp(1.1rem,3vw,1.5rem); color:rgba(255,255,255,0.85); margin:1rem 0 0.4rem; font-weight:700; animation:fadeUp 0.8s 0.3s both; }
+    .tagline em { color:var(--orange-light); font-style:normal; font-weight:800; }
+    .subtitle { font-size:clamp(1rem,2.2vw,1.15rem); color:rgba(255,255,255,0.5); margin-bottom:2.5rem; line-height:1.7; animation:fadeUp 0.8s 0.5s both; }
+
+    @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
+    .form-wrap { display:flex; max-width:480px; margin:0 auto 1rem; border-radius:50px; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,0.4); animation:fadeUp 0.8s 0.7s both; }
+    .form-wrap input { flex:1; padding:1rem 1.5rem; border:none; font-family:'Nunito',sans-serif; font-size:1rem; background:white; outline:none; }
+    .form-wrap input::placeholder { color:#b2bec3; }
+    .form-wrap button { padding:1rem 1.8rem; background:linear-gradient(135deg,var(--orange),var(--orange-light)); border:none; color:white; font-family:'Nunito',sans-serif; font-size:1rem; font-weight:800; cursor:pointer; white-space:nowrap; transition:filter 0.2s; }
+    .form-wrap button:hover { filter:brightness(1.1); }
+    .form-note { color:rgba(255,255,255,0.35); font-size:0.8rem; animation:fadeUp 0.8s 0.9s both; }
+
+    .badges { display:flex; gap:0.7rem; justify-content:center; flex-wrap:wrap; margin-top:2rem; animation:fadeUp 0.8s 1.1s both; }
+    .badge { background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.18); border-radius:50px; padding:0.4rem 1rem; font-size:0.82rem; color:rgba(255,255,255,0.75); }
+
+    .success-msg { display:none; background:rgba(46,204,113,0.15); border:2px solid var(--green); border-radius:12px; padding:0.8rem 1.2rem; color:var(--green); font-weight:700; margin-top:0.8rem; font-size:0.9rem; }
+    .success-msg.show { display:block; animation:fadeUp 0.4s both; }
+
+    /* SECTIONS */
+    section { padding:5rem 1.5rem; max-width:1100px; margin:0 auto; }
+    .section-title { font-family:'Righteous',cursive; font-size:clamp(1.8rem,5vw,2.8rem); color:var(--dark); margin-bottom:0.5rem; }
+    .section-title span { color:var(--green-dark); }
+    .section-sub { color:var(--muted); font-size:1rem; margin-bottom:2.5rem; }
+
+    /* PROBLÈME */
+    .problem-box { background:white; border-radius:28px; padding:2.5rem; box-shadow:0 4px 30px rgba(0,0,0,0.07); max-width:750px; margin:0 auto; }
+    .problem-box .story { color:var(--muted); line-height:1.9; font-size:1rem; }
+    .problem-box .story strong { color:var(--text); }
+    .highlight-green { display:inline-block; margin-top:1.5rem; background:#e8faf0; border-radius:50px; padding:0.5rem 1.2rem; font-size:0.9rem; color:var(--green-dark); font-weight:700; }
+
+    /* POUR QUI */
+    .people-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:1.5rem; }
+    .people-card { background:white; border-radius:24px; padding:2rem; box-shadow:0 4px 20px rgba(0,0,0,0.06); text-align:center; transition:transform 0.3s; }
+    .people-card:hover { transform:translateY(-6px); }
+    .people-card .icon { font-size:3rem; margin-bottom:1rem; }
+    .people-card h3 { font-size:1.05rem; font-weight:800; margin-bottom:0.5rem; }
+    .people-card p { color:var(--muted); font-size:0.9rem; line-height:1.6; }
+
+    /* VALEURS */
+    .valeurs-bg { background:linear-gradient(135deg,#1a1a2e,#16213e); border-radius:32px; padding:3.5rem 2rem; color:white; }
+    .valeurs-bg .section-title { color:white; }
+    .valeurs-bg .section-sub { color:rgba(255,255,255,0.5); }
+    .valeurs-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:1.5rem; }
+    .valeur-card { background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:20px; padding:1.8rem; transition:transform 0.3s; }
+    .valeur-card:hover { transform:translateY(-4px); }
+    .valeur-card .icon { font-size:2.2rem; margin-bottom:1rem; }
+    .valeur-card h3 { font-size:1rem; font-weight:800; margin-bottom:0.5rem; color:white; }
+    .valeur-card p { color:rgba(255,255,255,0.55); font-size:0.88rem; line-height:1.6; }
+
+    /* SÉCURITÉ */
+    .steps { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:2rem; }
+    .step { background:white; border-radius:24px; padding:2rem; box-shadow:0 4px 30px rgba(0,0,0,0.06); transition:transform 0.3s,box-shadow 0.3s; }
+    .step:hover { transform:translateY(-6px); box-shadow:0 12px 40px rgba(0,0,0,0.12); }
+    .step-icon { font-size:2.5rem; margin-bottom:1rem; }
+    .step h3 { font-size:1.05rem; font-weight:800; margin-bottom:0.5rem; }
+    .step p { color:var(--muted); font-size:0.9rem; line-height:1.6; }
+
+    /* PARTENAIRES */
+    .partner-box { background:#f0faf4; border:2px dashed var(--green); border-radius:24px; padding:2.5rem; text-align:center; max-width:650px; margin:0 auto; }
+    .partner-box h3 { font-size:1.2rem; font-weight:800; color:var(--green-dark); margin-bottom:0.8rem; }
+    .partner-box p { color:var(--muted); line-height:1.8; font-size:0.95rem; }
+
+    /* CTA */
+    .cta-section { background:linear-gradient(135deg,var(--green-dark),#1abc9c); border-radius:32px; padding:4rem 2rem; text-align:center; color:white; max-width:900px; margin:0 1.5rem 4rem; margin-left:auto; margin-right:auto; }
+    .cta-section h2 { font-family:'Righteous',cursive; font-size:clamp(1.8rem,5vw,2.6rem); margin-bottom:0.8rem; }
+    .cta-section p { opacity:0.85; margin-bottom:2rem; font-size:1rem; }
+    .cta-form { display:flex; max-width:440px; margin:0 auto; border-radius:50px; overflow:hidden; box-shadow:0 10px 40px rgba(0,0,0,0.2); }
+    .cta-form input { flex:1; padding:1rem 1.5rem; border:none; font-family:'Nunito',sans-serif; font-size:1rem; outline:none; }
+    .cta-form button { padding:1rem 1.5rem; background:var(--dark); border:none; color:white; font-family:'Nunito',sans-serif; font-weight:800; cursor:pointer; transition:background 0.2s; }
+    .cta-form button:hover { background:#000; }
+
+    footer { text-align:center; padding:2rem; color:var(--muted); font-size:0.85rem; }
+    footer strong { color:var(--text); }
+
+    .reveal { opacity:0; transform:translateY(30px); transition:opacity 0.6s,transform 0.6s; }
+    .reveal.visible { opacity:1; transform:translateY(0); }
+
+    /* ── MOBILE ── */
+    @media (max-width: 600px) {
+      .hero { padding: 1.5rem 1rem; }
+      .hero-content { width: 100%; }
+
+      .form-wrap {
+        flex-direction: column;
+        border-radius: 20px;
+        max-width: 100%;
+      }
+      .form-wrap input {
+        border-radius: 16px 16px 0 0;
+        padding: 0.9rem 1.2rem;
+        font-size: 0.95rem;
+        width: 100%;
+      }
+      .form-wrap button {
+        border-radius: 0 0 16px 16px;
+        padding: 0.9rem 1rem;
+        font-size: 0.95rem;
+        width: 100%;
+        text-align: center;
+      }
+
+      .cta-form {
+        flex-direction: column;
+        border-radius: 20px;
+        max-width: 100%;
+      }
+      .cta-form input {
+        border-radius: 16px 16px 0 0;
+        padding: 0.9rem 1.2rem;
+        width: 100%;
+      }
+      .cta-form button {
+        border-radius: 0 0 16px 16px;
+        padding: 0.9rem 1rem;
+        width: 100%;
+      }
+
+      .badges { gap: 0.5rem; }
+      .badge { font-size: 0.75rem; padding: 0.35rem 0.8rem; }
+
+      section { padding: 3rem 1rem; }
+
+      .problem-box { padding: 1.5rem; }
+
+      .valeurs-bg { padding: 2rem 1rem; border-radius: 20px; }
+
+      .cta-section {
+        margin: 0 1rem 3rem;
+        padding: 2.5rem 1.2rem;
+        border-radius: 24px;
+      }
+
+      .partner-box { padding: 1.5rem 1rem; }
+
+      .people-grid,
+      .valeurs-grid,
+      .steps { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+
+<!-- HERO -->
+<div class="hero">
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="road-lines"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+  <div class="hero-content">
+    <div class="coming-badge"><span class="dot"></span> Projet en cours — Rejoins l'aventure</div>
+    <div class="logo">H<span>o</span>py 🚗</div>
+    <p class="tagline">With Hopy, everybody's <em>happy !</em></p>
+    <p class="subtitle">Le covoiturage citoyen, gratuit, sécurisé et humain.<br/>Parce que se faire confiance, ça s'apprend.</p>
+    <div class="form-wrap">
+      <input type="email" id="email1" placeholder="Ton adresse email..." />
+      <button onclick="subscribe('email1','msg1')">Je soutiens le projet 🙌</button>
+    </div>
+    <div id="msg1" class="success-msg">🎉 Merci ! Tu seras parmi les premiers informés du lancement.</div>
+    <p class="form-note">Gratuit · Zéro spam · Tu peux te désinscrire à tout moment</p>
+    <div class="badges">
+      <span class="badge">🌿 Éco-citoyen</span>
+      <span class="badge">🤝 Solidaire</span>
+      <span class="badge">🔒 Sécurisé</span>
+      <span class="badge">🏘️ Local</span>
+      <span class="badge">💚 Gratuit</span>
+    </div>
+  </div>
+</div>
+
+<!-- PROBLÈME -->
+<section class="reveal" style="padding-bottom:2rem;">
+  <div style="text-align:center; margin-bottom:2.5rem;">
+    <div class="section-title">Remettre l'auto-stop <span>au goût du jour</span></div>
+    <p class="section-sub">Parce que se faire confiance, ça s'apprend — et ça se retrouve</p>
+  </div>
+  <div class="problem-box">
+    <p class="story">
+      Avant, faire du stop c'était normal. On levait le pouce, quelqu'un s'arrêtait, on échangeait, on avançait ensemble.<br/><br/>
+      Aujourd'hui les gens ont peur. Peur de l'inconnu, peur du jugement, peur du danger. Et pourtant, des centaines de voitures passent chaque jour avec <strong>un siège vide</strong>, pendant que d'autres galèrent à trouver un transport en zone rurale, en sortie de boîte de nuit, après une panne, ou simplement parce que les bus ne passent plus.<br/><br/>
+      <strong>Et si on reconnectait le peuple ?</strong> Pas avec une grande technologie froide. Avec une app simple, humaine, qui redonne confiance entre citoyens.
+    </p>
+    <span class="highlight-green">🌱 C'est de là qu'est née l'idée Hopy</span>
+  </div>
+</section>
+
+<!-- POUR QUI -->
+<section class="reveal" style="padding-top:2rem;">
+  <div style="text-align:center; margin-bottom:3rem;">
+    <div class="section-title">Pour <span>tout le monde</span></div>
+    <p class="section-sub">Pas juste pour les jeunes branchés. Pour toute la société.</p>
+  </div>
+  <div class="people-grid">
+    <div class="people-card">
+      <div class="icon">👵</div>
+      <h3>La mamie du village</h3>
+      <p>Elle n'a plus de voiture mais doit faire ses courses. Hopy lui trouve un voisin qui passe par là.</p>
+    </div>
+    <div class="people-card">
+      <div class="icon">👷</div>
+      <h3>Le travailleur du matin</h3>
+      <p>Il fait le même trajet chaque jour. Autant prendre quelqu'un avec lui et rendre service en chemin.</p>
+    </div>
+    <div class="people-card">
+      <div class="icon">🎒</div>
+      <h3>L'étudiant</h3>
+      <p>Il veut rentrer chez ses parents le week-end sans se ruiner en transport ou en essence.</p>
+    </div>
+    <div class="people-card">
+      <div class="icon">💼</div>
+      <h3>L'entrepreneur local</h3>
+      <p>Il se déplace pour ses clients. Partager sa voiture lui permet de faire des rencontres et de nouveaux contacts.</p>
+    </div>
+  </div>
+</section>
+
+<!-- VALEURS -->
+<section class="reveal" style="padding-top:0;">
+  <div class="valeurs-bg">
+    <div style="text-align:center; margin-bottom:2.5rem;">
+      <div class="section-title" style="color:white;">Ce en quoi <span style="color:var(--orange-light);">on croit</span></div>
+      <p class="section-sub">Les valeurs qui guident chaque décision du projet</p>
+    </div>
+    <div class="valeurs-grid">
+      <div class="valeur-card">
+        <div class="icon">🤝</div>
+        <h3>La confiance entre citoyens ⭐</h3>
+        <p>Dans un monde où on se méfie de tout, Hopy recrée du lien. Chaque conducteur et passager est noté après le trajet. Les étoiles parlent d'elles-mêmes — tu sais avec qui tu montes.</p>
+      </div>
+      <div class="valeur-card">
+        <div class="icon">🌿</div>
+        <h3>L'écologie concrète</h3>
+        <p>Pas de grands discours. Juste moins de voitures vides sur les routes. Chaque trajet partagé, c'est du CO₂ en moins.</p>
+      </div>
+      <div class="valeur-card">
+        <div class="icon">🏘️</div>
+        <h3>Le local avant tout</h3>
+        <p>Les zones rurales mal desservies, les sorties de boîte de nuit sans taxi, les petits villages sans bus… Hopy comble les vides là où les grands services ne vont pas.</p>
+      </div>
+      <div class="valeur-card">
+        <div class="icon">💚</div>
+        <h3>La gratuité totale</h3>
+        <p>Comme le troc d'autrefois, Hopy remet l'humain au centre. Zéro argent entre conducteur et passager. Juste des gens qui se rendent service, comme on le faisait avant.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SÉCURITÉ -->
+<section class="reveal">
+  <div style="text-align:center; margin-bottom:3rem;">
+    <div class="section-title">Ta sécurité, <span>notre obsession</span></div>
+    <p class="section-sub">Les fonctionnalités prévues pour que tout le monde voyage sereinement</p>
+  </div>
+  <div class="steps">
+    <div class="step">
+      <div class="step-icon">🗺️</div>
+      <h3>Suivi GPS en temps réel</h3>
+      <p>Tu vois la voiture de ton conducteur se déplacer en direct sur la carte. Tu sais exactement où il en est.</p>
+    </div>
+    <div class="step">
+      <div class="step-icon">👨‍👩‍👧</div>
+      <h3>Alerte à tes proches</h3>
+      <p>Choisis 1 à 3 contacts de confiance. Ils reçoivent ton trajet par SMS et peuvent te suivre en direct. Idéal pour rassurer les parents.</p>
+    </div>
+    <div class="step">
+      <div class="step-icon">⭐</div>
+      <h3>Notes & commentaires</h3>
+      <p>Après chaque trajet, conducteur et passager se notent. Les bons profils sont mis en avant. Les mauvais se voient tout de suite.</p>
+    </div>
+    <div class="step">
+      <div class="step-icon">🗂️</div>
+      <h3>Profils vérifiés</h3>
+      <p>Photo, prénom, historique de trajets, note moyenne. Tu sais avec qui tu montes avant même d'accepter.</p>
+    </div>
+  </div>
+</section>
+
+<!-- PARTENAIRES -->
+<section class="reveal" style="padding-top:0;">
+  <div class="partner-box">
+    <h3>🤝 Et demain ?</h3>
+    <p>
+      Hopy a vocation à travailler avec des <strong>commerçants et partenaires locaux</strong> pour récompenser les conducteurs les plus actifs. Stations-service, commerces de proximité, événements culturels et sportifs…<br/><br/>
+      L'idée : que chaque kilomètre partagé puisse, à terme, te rapporter quelque chose de concret dans ton quotidien.
+    </p>
+  </div>
+</section>
+
+<!-- CTA FINAL -->
+<div class="cta-section reveal">
+  <h2>Tu crois en ce projet ? 🚀</h2>
+  <p>Laisse ton email et rejoins la communauté des premiers Hoppers.<br/>On te tient au courant de chaque avancée.</p>
+  <div class="cta-form">
+    <input type="email" id="email2" placeholder="Ton email..." />
+    <button onclick="subscribe('email2','msg2')">Je rejoins !</button>
+  </div>
+  <div id="msg2" class="success-msg" style="color:white;background:rgba(255,255,255,0.15);border-color:white;margin-top:1rem;">🎉 Bienvenue dans la famille Hopy !</div>
+</div>
+
+<footer>
+  <p>Fait avec 💚 pour les citoyens · <strong>Hopy</strong> © 2026</p>
+  <p style="margin-top:0.3rem;font-size:0.75rem;"><em>With Hopy, everybody's happy</em></p>
+</footer>
+
+<script>
+  const SHEET_WEBHOOK = 'https://script.google.com/macros/s/AKfycbzLbt3lpJ3Hwk9Utq7HTWxCWNO-57M91OZU_cPit_UXCGqkZRpiUI1OO6pmbdhILXA-/exec';
+
+  function subscribe(inputId, msgId) {
+    const val = document.getElementById(inputId).value.trim();
+    if (!val || !val.includes('@')) {
+      document.getElementById(inputId).style.outline = '2px solid #e74c3c';
+      setTimeout(() => document.getElementById(inputId).style.outline = '', 1500);
+      return;
+    }
+    // Envoi vers Google Sheets
+    const params = new URLSearchParams({
+      email: val,
+      date: new Date().toLocaleDateString('fr-FR'),
+      source: 'landing'
+    });
+    fetch(SHEET_WEBHOOK, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: params.toString()
+    })
+    .then(() => {
+      document.getElementById(inputId).value = '';
+      document.getElementById(msgId).classList.add('show');
+    })
+    .catch(() => {
+      document.getElementById(inputId).value = '';
+      document.getElementById(msgId).classList.add('show');
+    });
+  }
+
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+</script>
+</body>
+</html>
