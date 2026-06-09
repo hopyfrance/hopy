@@ -45,9 +45,7 @@
 
     /* BOTTOM PANEL */
     .bottom-panel { background: white; border-radius: 24px 24px 0 0; padding: 16px; z-index: 100; box-shadow: 0 -4px 30px rgba(0,0,0,0.15); overflow-y: auto; transition: height 0.3s ease; position: relative; }
-    .bottom-panel.collapsed { height: 56px !important; overflow: hidden; }
-    .panel-handle { width: 40px; height: 4px; background: #ddd; border-radius: 2px; margin: 0 auto 14px; cursor: grab; touch-action: none; }
-    .panel-handle:active { cursor: grabbing; }
+    .panel-handle { width: 40px; height: 4px; background: #ddd; border-radius: 2px; margin: 0 auto 14px; cursor: pointer; touch-action: none; }
 
     /* COMING SOON SCREEN */
     .coming-soon-screen { display: none; flex-direction: column; align-items: center; justify-content: center; padding: 40px 24px; text-align: center; position: fixed; inset: 0; z-index: 3000; background: white; }
@@ -877,46 +875,29 @@
     document.querySelector('.nav-item').classList.add('active');
   }
 
-  // ── PANNEAU GLISSABLE ────────────────────────────────
+  // ── PANNEAU TOGGLE ───────────────────────────────────
   (function() {
     const panel = document.querySelector('.bottom-panel');
     const handle = document.querySelector('.panel-handle');
-    let startY = 0, startH = 0, dragging = false;
-    const MIN_H = 56, MAX_H = window.innerHeight * 0.75;
+    const mapEl = document.getElementById('map');
+    let isOpen = true;
 
-    function onStart(e) {
-      dragging = true;
-      startY = e.touches ? e.touches[0].clientY : e.clientY;
-      startH = panel.offsetHeight;
-      panel.style.transition = 'none';
-      e.preventDefault();
-    }
-    function onMove(e) {
-      if (!dragging) return;
-      const y = e.touches ? e.touches[0].clientY : e.clientY;
-      const delta = startY - y;
-      const newH = Math.max(MIN_H, Math.min(MAX_H, startH + delta));
-      panel.style.height = newH + 'px';
-      e.preventDefault();
-    }
-    function onEnd() {
-      if (!dragging) return;
-      dragging = false;
-      panel.style.transition = 'height 0.3s ease';
-      const h = panel.offsetHeight;
-      // Snap : si moins de 30% de MAX_H → replier, sinon laisser
-      if (h < MAX_H * 0.3) {
-        panel.style.height = MIN_H + 'px';
-      } else if (h > MAX_H * 0.7) {
-        panel.style.height = MAX_H + 'px';
+    function togglePanel() {
+      isOpen = !isOpen;
+      if (isOpen) {
+        panel.style.height = '45vh';
+        panel.style.overflow = 'auto';
+        mapEl.style.flex = '1';
+      } else {
+        panel.style.height = '28px';
+        panel.style.overflow = 'hidden';
+        mapEl.style.flex = '1';
       }
+      setTimeout(() => map && map.invalidateSize(), 320);
     }
-    handle.addEventListener('touchstart', onStart, { passive: false });
-    handle.addEventListener('touchmove', onMove, { passive: false });
-    handle.addEventListener('touchend', onEnd);
-    handle.addEventListener('mousedown', onStart);
-    document.addEventListener('mousemove', onMove);
-    document.addEventListener('mouseup', onEnd);
+
+    handle.addEventListener('click', togglePanel);
+    handle.style.cursor = 'pointer';
     // Hauteur initiale
     panel.style.height = '45vh';
   })();
