@@ -879,26 +879,33 @@
   (function() {
     const panel = document.querySelector('.bottom-panel');
     const handle = document.querySelector('.panel-handle');
-    const mapEl = document.getElementById('map');
     let isOpen = true;
 
-    function togglePanel() {
-      isOpen = !isOpen;
-      if (isOpen) {
-        panel.style.height = '45vh';
-        panel.style.overflow = 'auto';
-        mapEl.style.flex = '1';
-      } else {
-        panel.style.height = '28px';
-        panel.style.overflow = 'hidden';
-        mapEl.style.flex = '1';
-      }
+    // Créer un bouton flottant pour rouvrir
+    const reopenBtn = document.createElement('button');
+    reopenBtn.id = 'reopen-btn';
+    reopenBtn.innerHTML = '▲ Voir les trajets';
+    reopenBtn.style.cssText = 'display:none;position:fixed;bottom:70px;left:50%;transform:translateX(-50%);z-index:300;background:white;border:none;border-radius:50px;padding:10px 20px;font-family:Nunito,sans-serif;font-size:13px;font-weight:800;color:#1D6A35;box-shadow:0 4px 16px rgba(0,0,0,0.2);cursor:pointer;';
+    document.body.appendChild(reopenBtn);
+
+    function open() {
+      isOpen = true;
+      panel.style.height = '45vh';
+      panel.style.overflow = 'auto';
+      reopenBtn.style.display = 'none';
       setTimeout(() => map && map.invalidateSize(), 320);
     }
 
-    handle.addEventListener('click', togglePanel);
-    handle.style.cursor = 'pointer';
-    // Hauteur initiale
+    function close() {
+      isOpen = false;
+      panel.style.height = '0px';
+      panel.style.overflow = 'hidden';
+      reopenBtn.style.display = 'block';
+      setTimeout(() => map && map.invalidateSize(), 320);
+    }
+
+    handle.addEventListener('click', () => isOpen ? close() : open());
+    reopenBtn.addEventListener('click', open);
     panel.style.height = '45vh';
   })();
 
