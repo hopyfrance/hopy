@@ -44,8 +44,18 @@
     #map { flex: 1; z-index: 1; min-height: 0; position: relative; }
 
     /* BOTTOM PANEL */
-    .bottom-panel { background: white; border-radius: 24px 24px 0 0; padding: 16px; z-index: 100; box-shadow: 0 -4px 30px rgba(0,0,0,0.15); max-height: 55vh; overflow-y: auto; }
-    .panel-handle { width: 40px; height: 4px; background: #ddd; border-radius: 2px; margin: 0 auto 14px; }
+    .bottom-panel { background: white; border-radius: 24px 24px 0 0; padding: 16px; z-index: 100; box-shadow: 0 -4px 30px rgba(0,0,0,0.15); overflow-y: auto; transition: height 0.3s ease; position: relative; }
+    .bottom-panel.collapsed { height: 56px !important; overflow: hidden; }
+    .panel-handle { width: 40px; height: 4px; background: #ddd; border-radius: 2px; margin: 0 auto 14px; cursor: grab; touch-action: none; }
+    .panel-handle:active { cursor: grabbing; }
+
+    /* COMING SOON SCREEN */
+    .coming-soon-screen { display: none; flex-direction: column; align-items: center; justify-content: center; padding: 40px 24px; text-align: center; position: fixed; inset: 0; z-index: 3000; background: white; }
+    .coming-soon-screen.open { display: flex; }
+    .coming-soon-icon { font-size: 64px; margin-bottom: 16px; }
+    .coming-soon-title { font-size: 22px; font-weight: 900; color: var(--dark); margin-bottom: 8px; }
+    .coming-soon-sub { font-size: 14px; color: var(--muted); line-height: 1.6; margin-bottom: 32px; }
+    .coming-soon-close { padding: 14px 32px; border-radius: 16px; border: none; background: var(--grey); color: var(--dark); font-family: 'Nunito', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer; }
 
     /* MODE TOGGLE */
     .mode-toggle { display: flex; background: var(--grey); border-radius: 16px; padding: 4px; margin-bottom: 14px; }
@@ -324,12 +334,28 @@
   </div>
 
   <div class="bottom-nav">
-    <div class="nav-item active" onclick="setTab(this)"><div class="nav-icon">🗺️</div><div class="nav-label">Carte</div></div>
-    <div class="nav-item" onclick="setTab(this)"><div class="nav-icon">🔍</div><div class="nav-label">Trajets</div></div>
-    <div class="nav-item" onclick="setTab(this)"><div class="nav-icon">🏆</div><div class="nav-label">Missions</div></div>
-    <div class="nav-item" onclick="setTab(this)"><div class="nav-icon">💬</div><div class="nav-label">Messages</div></div>
+    <div class="nav-item active" onclick="setTab(this,'map')"><div class="nav-icon">🗺️</div><div class="nav-label">Carte</div></div>
+    <div class="nav-item" onclick="setTab(this,'trajets')"><div class="nav-icon">🔍</div><div class="nav-label">Trajets</div></div>
+    <div class="nav-item" onclick="setTab(this,'missions')"><div class="nav-icon">🏆</div><div class="nav-label">Missions</div></div>
+    <div class="nav-item" onclick="setTab(this,'messages')"><div class="nav-icon">💬</div><div class="nav-label">Messages</div></div>
     <div class="nav-item" onclick="openProfile()"><div class="nav-icon">👤</div><div class="nav-label">Profil</div></div>
   </div>
+</div>
+
+<!-- COMING SOON : MISSIONS -->
+<div class="coming-soon-screen" id="screen-missions">
+  <div class="coming-soon-icon">🏆</div>
+  <div class="coming-soon-title">Missions — Bientôt !</div>
+  <div class="coming-soon-sub">Complète des défis de covoiturage et gagne des récompenses chez les commerçants locaux de Gironde. Cette fonctionnalité arrive prochainement.</div>
+  <button class="coming-soon-close" onclick="closeComingSoon('missions')">← Retour</button>
+</div>
+
+<!-- COMING SOON : MESSAGES -->
+<div class="coming-soon-screen" id="screen-messages">
+  <div class="coming-soon-icon">💬</div>
+  <div class="coming-soon-title">Messages — Bientôt !</div>
+  <div class="coming-soon-sub">Tu pourras bientôt discuter directement avec les conducteurs et passagers pour organiser tes trajets. On y travaille !</div>
+  <button class="coming-soon-close" onclick="closeComingSoon('messages')">← Retour</button>
 </div>
 
 <!-- ÉCRAN INSCRIPTION -->
@@ -836,10 +862,64 @@
     showToast(currentMode === 'driver' ? '🚗 Trajet publié !' : '🎒 Recherche lancée !');
   }
 
-  function setTab(el) {
+  function setTab(el, tab) {
     document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
     el.classList.add('active');
+    if (tab === 'missions' || tab === 'messages') {
+      document.getElementById(`screen-${tab}`).classList.add('open');
+    }
   }
+
+  function closeComingSoon(tab) {
+    document.getElementById(`screen-${tab}`).classList.remove('open');
+    // Réactiver l'onglet Carte
+    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+    document.querySelector('.nav-item').classList.add('active');
+  }
+
+  // ── PANNEAU GLISSABLE ────────────────────────────────
+  (function() {
+    const panel = document.querySelector('.bottom-panel');
+    const handle = document.querySelector('.panel-handle');
+    let startY = 0, startH = 0, dragging = false;
+    const MIN_H = 56, MAX_H = window.innerHeight * 0.75;
+
+    function onStart(e) {
+      dragging = true;
+      startY = e.touches ? e.touches[0].clientY : e.clientY;
+      startH = panel.offsetHeight;
+      panel.style.transition = 'none';
+      e.preventDefault();
+    }
+    function onMove(e) {
+      if (!dragging) return;
+      const y = e.touches ? e.touches[0].clientY : e.clientY;
+      const delta = startY - y;
+      const newH = Math.max(MIN_H, Math.min(MAX_H, startH + delta));
+      panel.style.height = newH + 'px';
+      e.preventDefault();
+    }
+    function onEnd() {
+      if (!dragging) return;
+      dragging = false;
+      panel.style.transition = 'height 0.3s ease';
+      const h = panel.offsetHeight;
+      // Snap : si moins de 30% de MAX_H → replier, sinon laisser
+      if (h < MAX_H * 0.3) {
+        panel.style.height = MIN_H + 'px';
+      } else if (h > MAX_H * 0.7) {
+        panel.style.height = MAX_H + 'px';
+      }
+    }
+    handle.addEventListener('touchstart', onStart, { passive: false });
+    handle.addEventListener('touchmove', onMove, { passive: false });
+    handle.addEventListener('touchend', onEnd);
+    handle.addEventListener('mousedown', onStart);
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onEnd);
+    // Hauteur initiale
+    panel.style.height = '45vh';
+  })();
 
   function openProfile() {
     document.getElementById('profile-modal').classList.add('open');
