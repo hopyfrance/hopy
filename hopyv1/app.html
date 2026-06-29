@@ -509,6 +509,47 @@
 <div class="toast" id="toast"></div>
 
 <script>
+  // ── SUPABASE CONFIG ──────────────────────────────────
+  const SUPABASE_URL = 'https://fyziepaeyoeutdqftzwp.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ5emllcGFleW9ldXRkcWZ0endwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3MjUxNzAsImV4cCI6MjA5ODMwMTE3MH0.xDonhblOX9Pc4poowjElI1kGmH2604wZBbu8W6G4awo';
+
+  async function supabaseInsert(table, data) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify(data)
+    });
+    return res;
+  }
+
+  async function supabaseSelect(table) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?select=*&order=created_at.desc`, {
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`
+      }
+    });
+    return res.json();
+  }
+
+  async function supabaseCount(table) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?select=id`, {
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Prefer': 'count=exact'
+      }
+    });
+    const count = res.headers.get('content-range');
+    if (count) return parseInt(count.split('/')[1]) || 0;
+    return 0;
+  }
+
   const FRANCE_CENTER = [46.603354, 1.888334];
   let map, currentMode = 'driver';
   let countVal = 2;
@@ -855,8 +896,20 @@
     });
   }
 
-  function mainAction() {
+  async function mainAction() {
     if (!departCoords || !arriveeCoords) { showToast('📍 Remplis départ et arrivée !'); return; }
+    const depart = document.getElementById('input-depart').value;
+    const arrivee = document.getElementById('input-arrivee').value;
+    try {
+      await supabaseInsert('trajets', {
+        user_name: currentUser ? currentUser.name : 'Anonyme',
+        depart,
+        arrivee,
+        places: String(countVal),
+        mode: currentMode,
+        date: new Date().toLocaleDateString('fr-FR')
+      });
+    } catch(e) {}
     showToast(currentMode === 'driver' ? '🚗 Trajet publié !' : '🎒 Recherche lancée !');
   }
 
@@ -928,7 +981,7 @@
   }
 
   // ── INSCRIPTION ──────────────────────────────────────
-  const SHEET_WEBHOOK = 'https://script.google.com/macros/s/AKfycbzLbt3lpJ3Hwk9Utq7HTWxCWNO-57M91OZU_cPit_UXCGqkZRpiUI1OO6pmbdhILXA-/exec';
+  // Google Sheets remplacé par Supabase
 
   let obRole = null;
   let currentUser = null;
@@ -1062,26 +1115,15 @@
     currentUser = { name, commune, role: obRole || 'both' };
     localStorage.setItem('hopy_user', JSON.stringify(currentUser));
 
-    // Envoyer vers Google Sheets
+    // Envoyer vers Supabase
     try {
-      const params = new URLSearchParams({
-        name, commune,
-        commune_lat: communeLat,
-        commune_lon: communeLon,
-        commune_cp: communeCp,
-        commune_dept: communeDept,
-        commune_pays: communePays,
-        commune_osm_id: communeOsmId,
+      await supabaseInsert('users', {
+        name,
+        commune,
         email,
         role: obRole || 'both',
         date: new Date().toLocaleDateString('fr-FR'),
         source: 'app'
-      });
-      await fetch(SHEET_WEBHOOK, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: params.toString()
       });
     } catch(e) {
       // Silencieux — l'inscription locale est quand même sauvegardée
@@ -1091,8 +1133,14 @@
     document.getElementById('ob-screen-2').classList.remove('visible');
     document.getElementById('ob-success').classList.add('visible');
 
-    // Compteur animé fictif (à remplacer par vrai chiffre Brevo/Sheet)
-    animateCounter(document.getElementById('ob-counter'), 247, 248);
+    // Compteur réel depuis Supabase
+    try {
+      const total = await supabaseCount('users');
+      const el = document.getElementById('ob-counter');
+      animateCounter(el, Math.max(0, total - 1), total);
+    } catch(e) {
+      document.getElementById('ob-counter').textContent = '1';
+    }
   }
 
   function animateCounter(el, from, to) {
