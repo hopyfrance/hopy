@@ -512,6 +512,7 @@
   // ── SUPABASE CONFIG ──────────────────────────────────
   const SUPABASE_URL = 'https://fyziepaeyoeutdqftzwp.supabase.co';
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ5emllcGFleW9ldXRkcWZ0endwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3MjUxNzAsImV4cCI6MjA5ODMwMTE3MH0.xDonhblOX9Pc4poowjElI1kGmH2604wZBbu8W6G4awo';
+  const SUPABASE_PUB_KEY = 'sb_publishable_bEMT5hIQtJbvrVMZl6WLgg_jUiZQU1_';
 
   async function supabaseInsert(table, data) {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
@@ -520,6 +521,7 @@
         'Content-Type': 'application/json',
         'apikey': SUPABASE_KEY,
         'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'x-client-info': 'supabase-js/2.0.0',
         'Prefer': 'return=minimal'
       },
       body: JSON.stringify(data)
@@ -560,19 +562,49 @@
   let myPosition = null, myMarker = null, watchId = null;
   let fakeTrajetsLayers = [];
 
-  // ── DONNÉES FICTIVES ─────────────────────────────────
-  const fakeDrivers = [
-    { name:"Marc D.", emoji:"👨", dist:"320m", stars:"⭐ 4.9", trips:47, depart:"Bordeaux", dest:"Mérignac", time:"Dans 5min", places:2, departCoords:[44.8378,-0.5792], arriveeCoords:[44.8350,-0.6430] },
-    { name:"Sophie L.", emoji:"👩", dist:"680m", stars:"⭐ 5.0", trips:23, depart:"Talence", dest:"Pessac", time:"Dans 12min", places:3, departCoords:[44.8080,-0.5950], arriveeCoords:[44.8060,-0.6310] },
-    { name:"Karim B.", emoji:"🧔", dist:"1.2km", stars:"⭐ 4.7", trips:89, depart:"Mérignac", dest:"Bordeaux Centre", time:"Dans 20min", places:1, departCoords:[44.8350,-0.6430], arriveeCoords:[44.8378,-0.5792] },
-    { name:"Lucie M.", emoji:"👩‍🦰", dist:"2.1km", stars:"⭐ 4.8", trips:34, depart:"Bordeaux", dest:"Arbanats", time:"Dans 35min", places:4, departCoords:[44.8378,-0.5792], arriveeCoords:[44.6800,-0.4200] },
-  ];
-  const fakePassengers = [
-    { name:"Marie T.", emoji:"👩‍🦳", dist:"150m", stars:"⭐ 4.8", trips:12, depart:"Bordeaux", dest:"Marché Capucins", time:"Maintenant", passengers:1, departCoords:[44.8378,-0.5792], arriveeCoords:[44.8330,-0.5680] },
-    { name:"Lucas M.", emoji:"🎒", dist:"400m", stars:"⭐ 4.6", trips:8, depart:"Talence", dest:"Gare Saint-Jean", time:"Dans 15min", passengers:2, departCoords:[44.8080,-0.5950], arriveeCoords:[44.8255,-0.5560] },
-    { name:"Fatima K.", emoji:"👩", dist:"900m", stars:"⭐ 5.0", trips:31, depart:"Pessac", dest:"Bordeaux Lac", time:"Dans 30min", passengers:1, departCoords:[44.8060,-0.6310], arriveeCoords:[44.8870,-0.5700] },
-    { name:"Ahmed S.", emoji:"👨", dist:"1.5km", stars:"⭐ 4.5", trips:15, depart:"Mérignac", dest:"Arbanats", time:"Dans 45min", passengers:3, departCoords:[44.8350,-0.6430], arriveeCoords:[44.6800,-0.4200] },
-  ];
+  // ── DONNÉES RÉELLES SUPABASE ─────────────────────────
+  let realTrajets = [];
+  let realDrivers = [];
+  let realPassengers = [];
+  const fakeDrivers = [];
+  const fakePassengers = [];
+
+  async function loadTrajets() {
+    try {
+      const data = await supabaseSelect('trajets');
+      if (!Array.isArray(data)) return;
+      realTrajets = data;
+      realDrivers = data.filter(t => t.mode === 'driver').map(t => ({
+        name: t.user_name || 'Hopper',
+        emoji: '🚗',
+        dist: '?',
+        stars: '⭐ ?',
+        trips: 0,
+        depart: t.depart,
+        dest: t.arrivee,
+        time: t.date || 'Aujourd'hui',
+        places: parseInt(t.places) || 2,
+      }));
+      realPassengers = data.filter(t => t.mode === 'passenger').map(t => ({
+        name: t.user_name || 'Hopper',
+        emoji: '🎒',
+        dist: '?',
+        stars: '⭐ ?',
+        trips: 0,
+        depart: t.depart,
+        dest: t.arrivee,
+        time: t.date || 'Aujourd'hui',
+        passengers: parseInt(t.places) || 1,
+      }));
+      // Mettre à jour le compteur du bouton proximité
+      const total = realDrivers.length + realPassengers.length;
+      const fab = document.querySelector('.nearby-count');
+      if (fab) fab.textContent = total;
+      renderHoppers();
+    } catch(e) {
+      console.log('Erreur chargement trajets:', e);
+    }
+  }
 
   // ── INIT MAP ─────────────────────────────────────────
   function initMap() {
@@ -636,27 +668,16 @@
     } catch(e) {}
   }
 
-  // ── MARQUEURS FICTIFS ────────────────────────────────
+  // ── MARQUEURS RÉELS ─────────────────────────────────
   function addFakeMarkers(center) {
-    const offsets = [[0.008,-0.012],[0.015,0.008],[-0.007,0.015],[-0.012,-0.005],[0.005,0.018],[-0.018,0.010],[0.020,-0.005],[-0.005,-0.018]];
-    const allHoppers = [...fakeDrivers, ...fakePassengers];
-    allHoppers.forEach((h, i) => {
-      const isDriver = i < fakeDrivers.length;
-      const coords = [center[0] + offsets[i][0], center[1] + offsets[i][1]];
-      const icon = L.divIcon({
-        html: `<div style="background:${isDriver ? '#1D6A35' : '#f9ca24'};width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;border:3px solid white;box-shadow:0 3px 10px rgba(0,0,0,0.2)">${h.emoji}</div>`,
-        className: 'custom-marker', iconSize: [38,38], iconAnchor: [19,19]
-      });
-      L.marker(coords, { icon }).addTo(map)
-        .bindPopup(`<b>${h.name}</b><br>${h.depart} → ${h.dest}<br>${h.time}`, { closeButton: false });
-    });
+    // Plus de marqueurs fictifs — les vrais trajets sont sur la carte via drawFakeTrajets
   }
 
-  // ── ITINÉRAIRES FICTIFS ──────────────────────────────
+  // ── ITINÉRAIRES RÉELS ────────────────────────────────
   async function drawFakeTrajets() {
     fakeTrajetsLayers.forEach(l => map.removeLayer(l));
     fakeTrajetsLayers = [];
-    const allHoppers = [...fakeDrivers, ...fakePassengers];
+    const allHoppers = [...realDrivers, ...realPassengers];
     for (const h of allHoppers) {
       const isDriver = fakeDrivers.includes(h);
       const color = isDriver ? '#16a34a' : '#2563eb';
@@ -816,8 +837,8 @@
   function renderNearbyPanel(tab) {
     const content = document.getElementById('np-content');
     let items = [];
-    if (tab === 'all' || tab === 'drivers') items = [...items, ...fakeDrivers.map(d => ({...d, type:'driver'}))];
-    if (tab === 'all' || tab === 'passengers') items = [...items, ...fakePassengers.map(p => ({...p, type:'passenger'}))];
+    if (tab === 'all' || tab === 'drivers') items = [...items, ...realDrivers.map(d => ({...d, type:'driver'}))];
+    if (tab === 'all' || tab === 'passengers') items = [...items, ...realPassengers.map(p => ({...p, type:'passenger'}))];
     content.innerHTML = '';
     if (!items.length) {
       content.innerHTML = '<div style="text-align:center;padding:40px;color:#aaa;font-size:14px">Aucun résultat</div>';
@@ -875,7 +896,7 @@
 
   function renderHoppers() {
     const list = document.getElementById('hopper-list');
-    const hoppers = currentMode === 'driver' ? fakePassengers : fakeDrivers;
+    const hoppers = currentMode === 'driver' ? realPassengers : realDrivers;
     list.innerHTML = '';
     hoppers.forEach(h => {
       const card = document.createElement('div');
@@ -911,6 +932,8 @@
       });
     } catch(e) {}
     showToast(currentMode === 'driver' ? '🚗 Trajet publié !' : '🎒 Recherche lancée !');
+    await loadTrajets();
+    drawFakeTrajets();
   }
 
   function setTab(el, tab) {
@@ -1180,9 +1203,10 @@
 
   // ── SPLASH + INIT ────────────────────────────────────
   window.onload = () => {
-    setTimeout(() => {
+    setTimeout(async () => {
       document.getElementById('splash').classList.add('hide');
       initMap();
+      await loadTrajets();
       renderHoppers();
       // Si déjà inscrit → passer directement à l'appli
       checkExistingUser();
